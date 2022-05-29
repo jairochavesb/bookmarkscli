@@ -1,0 +1,85 @@
+//----------------- Colors -----------------
+
+// View colors - internal area and border
+ViewBack = black
+ViewText = white bold
+
+// general colors
+Back         = black
+Text         = white
+DisabledText = white
+DisabledBack = black bold
+
+// editable & listbox-like controls (interactive ones)
+EditBack       = white
+EditText       = black
+EditActiveBack = cyan
+EditActiveText = black
+SelectionText  = yellow bold
+SelectionBack  = cyan bold
+
+// scroll control
+ScrollText = black
+ScrollBack = black
+ThumbText  = black
+ThumbBack  = black
+
+// window-like controls (checkbox, radiogroup...)
+ControlText         = white
+ControlBack         = black
+ControlActiveBack   = cyan bold
+ControlActiveText   = black
+ControlDisabledBack = white bold
+ControlDisabledText = black bold
+ControlShadow       = black
+
+// progressbar control
+ProgressBack       = blue
+ProgressText       = yellow
+ProgressActiveBack = blue bold
+ProgressActiveText = yellow bold
+
+// button control
+ButtonBack=white
+ButtonText=black
+ButtonActiveBack=cyan
+ButtonActiveText=black
+ButtonShadowBack=black
+ButtonDisabledText=black bold
+ButtonDisabledBack=white
+
+// bar chart control
+BarChartBack=black
+BarChartText=white
+
+// spark chart
+SparkChartBack=black
+SparkChartText=white
+SparkChartBarBack=black
+SparkChartBarText=cyan
+SparkChartMaxBack=black
+SparkChartMaxText=cyan bold
+
+// table view
+TableText=white
+TableBack=black
+TableSelectedText=white
+TableSelectedBack=black bold
+TableActiveCellText=white bold
+TableActiveCellBack=black bold
+TableLineText=white
+TableHeaderText=white
+TableHeaderBack=black
+
+//----------------- Objects -----------------
+SingleBorder=─│┌┐└┘
+DoubleBorder=═║╔╗╚╝
+Edit=←→V*
+ScrollBar=░■▲▼◄►
+ViewButtons=^_x[]
+CheckBox=[] X?
+Radio=() *
+ProgressBar=░▒
+BarChart=█─│┌┐└┘┬┴├┤┼
+SparkChart=█
+TableView=─│┼▼▲
