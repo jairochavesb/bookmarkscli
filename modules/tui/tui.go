@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"bookmarksV2/modules/config"
 	"bookmarksV2/modules/db"
-	"fmt"
+	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	ui "github.com/jairochavesb/clui"
@@ -12,7 +14,7 @@ import (
 	"golang.org/x/term"
 )
 
-var txtName, txtPath, txtTags, txtSearch *ui.EditField
+var txtName, txtUrl, txtTags, txtSearch *ui.EditField
 var listboxResults *ui.ListBox
 
 var lblStatus *ui.Label
@@ -46,28 +48,30 @@ func initUI() {
 	mainWindow.SetTitleButtons(0)
 	mainWindow.SetPack(ui.Vertical)
 
-	// FORM WITH BOOKMARK WIDGETS (PATH, NAME, TAGS)
+	// FORM WITH BOOKMARK WIDGETS (Url, NAME, TAGS)
 	frmShowInsertData := ui.CreateFrame(mainWindow, frameWidth, 5, ui.BorderThin, ui.Fixed)
 	frmShowInsertData.SetPack(ui.Vertical)
 	frmShowInsertData.SetTitle("[BOOKMARK]")
 	frmShowInsertData.SetGaps(0, 1)
+
+	frmWidgetsUrl := ui.CreateFrame(frmShowInsertData, 1, 1, ui.BorderNone, ui.Fixed)
+	frmWidgetsUrl.SetPack(ui.Horizontal)
+	_ = ui.CreateLabel(frmWidgetsUrl, 7, 1, "  Url ", ui.Fixed)
+	txtUrl = ui.CreateEditField(frmWidgetsUrl, widgetWidth, "", ui.Fixed)
 
 	frmWidgetsName := ui.CreateFrame(frmShowInsertData, 1, 1, ui.BorderNone, ui.Fixed)
 	frmWidgetsName.SetPack(ui.Horizontal)
 	_ = ui.CreateLabel(frmWidgetsName, 7, 1, "  Name ", ui.Fixed)
 	txtName = ui.CreateEditField(frmWidgetsName, widgetWidth, "", ui.Fixed)
 
-	frmWidgetsPath := ui.CreateFrame(frmShowInsertData, 1, 1, ui.BorderNone, ui.Fixed)
-	frmWidgetsPath.SetPack(ui.Horizontal)
-	_ = ui.CreateLabel(frmWidgetsPath, 7, 1, "  Path ", ui.Fixed)
-	txtPath = ui.CreateEditField(frmWidgetsPath, widgetWidth, "", ui.Fixed)
-
 	frmWidgetsTags := ui.CreateFrame(frmShowInsertData, 1, 1, ui.BorderNone, ui.Fixed)
 	frmWidgetsTags.SetPack(ui.Horizontal)
 	_ = ui.CreateLabel(frmWidgetsTags, 7, 1, "  Tags ", ui.Fixed)
 	txtTags = ui.CreateEditField(frmWidgetsTags, widgetWidth, "", ui.AutoSize)
 
-	_ = ui.CreateLabel(frmShowInsertData, widgetWidth, 1, "       <t:cyan>SAVE=<f:>Enter <t:cyan>CLEAR FIELD=<t:>Ctrl+R <t:cyan>CLEAR ALL=<t:>Ctrl+A", ui.Fixed)
+	l := "       <t:cyan>SAVE=<f:>Enter <t:cyan>CLEAR FIELD=<t:>Ctrl+R <t:cyan>CLEAR ALL=<t:>Ctrl+A"
+	l += " <t:cyan>COPY TEXT=<f:>Ctrl+C <t:cyan>PASTE TEXT=<f:>Ctrl+P <t:cyan>GET WORDS FROM URL=<f:>Ctrl+U"
+	_ = ui.CreateLabel(frmShowInsertData, widgetWidth, 1, l, ui.Fixed)
 
 	// FRAME WITH WIDGETS TO SEARCH DATA
 	frmMainSearchData := ui.CreateFrame(mainWindow, frameWidth, 1, ui.BorderThin, ui.Fixed)
@@ -83,11 +87,11 @@ func initUI() {
 	radioName.SetSelected(true)
 	searchCol = "name"
 
-	radioPath := ui.CreateRadio(frmRadios, 10, "Path", ui.Fixed)
+	radioUrl := ui.CreateRadio(frmRadios, 10, "Url", ui.Fixed)
 	radioTag := ui.CreateRadio(frmRadios, 10, "Tag", ui.Fixed)
 	radioGroup := ui.CreateRadioGroup()
 	radioGroup.AddItem(radioName)
-	radioGroup.AddItem(radioPath)
+	radioGroup.AddItem(radioUrl)
 	radioGroup.AddItem(radioTag)
 
 	frmSearchData := ui.CreateFrame(frmMainSearchData, frameWidth, 1, ui.BorderNone, ui.Fixed)
@@ -103,25 +107,27 @@ func initUI() {
 	frmResults.SetTitle("[RESULTS]")
 	frmResults.SetGaps(0, 1)
 	listboxResults = ui.CreateListBox(frmResults, -1, (height/2)-6, ui.AutoSize)
-	_ = ui.CreateLabel(frmResults, widgetWidth-1, 1, "<t:cyan>OPEN=<f:>Ctrl+O <t:cyan>EDIT=<t:>Ctrl+E", ui.Fixed)
+	_ = ui.CreateLabel(frmResults, widgetWidth-1, 1, "<t:cyan>OPEN=<f:>Enter <t:cyan>EDIT=<t:>Ctrl+E <t:cyan>DELETE=<t:>Ctrl+D", ui.Fixed)
 
 	// Status label
 	frmStatus := ui.CreateFrame(mainWindow, widgetWidth, 1, ui.BorderThin, ui.AutoSize)
 	frmStatus.SetTitle("[STATUS]")
 	lblStatus = ui.CreateLabel(frmStatus, 100, 1, "Hello user!", ui.AutoSize)
 
-	ui.ActivateControl(mainWindow, txtPath)
+	ui.ActivateControl(mainWindow, txtUrl)
 
 	txtName.OnKeyPress(func(key termbox.Key, r rune) bool {
 		if key == termbox.KeyEnter {
 			save()
 		} else if key == termbox.KeyCtrlA {
 			clearAll()
+		} else if key == termbox.KeyCtrlU {
+			txtName.SetTitle(getWords(txtUrl.Title()))
 		}
 		return false
 	})
 
-	txtPath.OnKeyPress(func(key termbox.Key, r rune) bool {
+	txtUrl.OnKeyPress(func(key termbox.Key, r rune) bool {
 		if key == termbox.KeyEnter {
 			save()
 		} else if key == termbox.KeyCtrlA {
@@ -135,6 +141,8 @@ func initUI() {
 			save()
 		} else if key == termbox.KeyCtrlA {
 			clearAll()
+		} else if key == termbox.KeyCtrlU {
+			txtTags.SetTitle(getWords(txtUrl.Title()))
 		}
 		return false
 	})
@@ -152,6 +160,7 @@ func initUI() {
 		} else if key == termbox.KeyCtrlE {
 			edit()
 		}
+
 		return false
 	})
 
@@ -160,9 +169,9 @@ func initUI() {
 			searchCol = "name"
 		}
 	})
-	radioPath.OnChange(func(b bool) {
+	radioUrl.OnChange(func(b bool) {
 		if b {
-			searchCol = "path"
+			searchCol = "Url"
 		}
 	})
 	radioTag.OnChange(func(b bool) {
@@ -176,27 +185,42 @@ func edit() {
 	l := listboxResults.SelectedItemText()
 	id = strings.Split(l, "◄►")[0]
 	txtName.SetTitle(strings.Split(l, "◄►")[1])
-	txtPath.SetTitle(strings.Split(l, "◄►")[2])
+	txtUrl.SetTitle(strings.Split(l, "◄►")[2])
 	txtTags.SetTitle(strings.Split(l, "◄►")[3])
 }
 
 func open() {
-	fmt.Println("open")
+	cmd := exec.Command(config.Configuration.WebBrowser, strings.Split(listboxResults.SelectedItemText(), "◄►")[2])
+	err := cmd.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func save() {
-	name := txtName.Title()
-	path := txtPath.Title()
-	tags := txtTags.Title()
+	n := txtName.Title()
+	p := txtUrl.Title()
+	t := txtTags.Title()
 
-	if tags == "" || name == "" || path == "" {
+	name := strings.Replace(n, "\n", "", -1)
+	Url := strings.Replace(p, "\n", "", -1)
+	tags := strings.Replace(t, "\n", "", -1)
+
+	if tags == "" || name == "" || Url == "" {
 		updateStatusLabel("Please fill all the bookmark input fields! >:(", 1)
 	} else {
 		if id == "" {
-			db.InsertData(name, path, tags)
-			updateStatusLabel("Bookmark saved successfully :)", 0)
+			dup := db.CheckIfDuplicated(txtUrl.Title())
+
+			if dup {
+				updateStatusLabel("Item already exist", 0)
+				clearAll()
+			} else {
+				db.InsertData(name, Url, tags)
+				updateStatusLabel("Bookmark saved successfully :)", 0)
+			}
 		} else {
-			db.UpdateData(id, name, path, tags)
+			db.UpdateData(id, name, Url, tags)
 			updateStatusLabel("Bookmark updated successfully :)", 0)
 		}
 
@@ -221,7 +245,7 @@ func search() {
 func clearAll() {
 	txtName.SetTitle("")
 	txtTags.SetTitle("")
-	txtPath.SetTitle("")
+	txtUrl.SetTitle("")
 	id = ""
 }
 
@@ -234,4 +258,14 @@ func updateStatusLabel(m string, t int) {
 	}
 
 	lblStatus.SetTitle(s)
+}
+
+func getWords(u string) string {
+	w := strings.ReplaceAll(u, "http://", "")
+	w = strings.ReplaceAll(w, "https://", "")
+	w = strings.ReplaceAll(w, "/", " ")
+	w = strings.ReplaceAll(w, "-", " ")
+	w = strings.ReplaceAll(w, "_", " ")
+
+	return w
 }

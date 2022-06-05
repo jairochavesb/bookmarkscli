@@ -1,6 +1,7 @@
 package db
 
 import (
+	"bookmarksV2/modules/config"
 	"database/sql"
 	"log"
 	"os"
@@ -11,16 +12,16 @@ import (
 )
 
 var id int
-var name, path, tags string
+var name, url, tags string
 
 func InitDB() {
-	file, err := os.Create("bookmarks.db")
+	file, err := os.Create(config.Configuration.DBFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 	file.Close()
 
-	sqlDB, err := sql.Open("sqlite3", "bookmarks.db")
+	sqlDB, err := sql.Open("sqlite3", config.Configuration.DBFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,7 +29,7 @@ func InitDB() {
 	createItemsTable := `CREATE TABLE items (
       "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,      
       "name" TEXT,
-      "path" TEXT,
+      "url" TEXT,
       "tags" TEXT    
      );`
 
@@ -41,19 +42,19 @@ func InitDB() {
 	defer sqlDB.Close()
 }
 
-func InsertData(n, p, t string) {
-	q := "INSERT INTO items(name, path, tags) VALUES (\"" + n + "\",\"" + p + "\",\"" + t + "\");"
-	execStatement(q)
+func InsertData(n, u, t string) {
+	q := "INSERT INTO items(name, url, tags) VALUES (\"" + n + "\",\"" + u + "\",\"" + t + "\");"
+	_ = execStatement(q)
 }
 
-func UpdateData(i, n, p, t string) {
-	q := "UPDATE items set tags=\"" + t + "\",name=\"" + n + "\",path=\"" + p + "\" where id=\"" + i + "\";"
-	execStatement(q)
+func UpdateData(i, n, u, t string) {
+	q := "UPDATE items set tags=\"" + t + "\",name=\"" + n + "\",url=\"" + u + "\" where id=\"" + i + "\";"
+	_ = execStatement(q)
 }
 
 func RemoveData(i string) {
 	q := "delete from items where id=" + i + ";"
-	execStatement(q)
+	_ = execStatement(q)
 }
 
 func SearchData(k, c string) []string {
@@ -79,7 +80,7 @@ func SearchData(k, c string) []string {
 		q += " LIKE '%" + k + "%';"
 	}
 
-	sqlDB, err := sql.Open("sqlite3", "bookmarks.db")
+	sqlDB, err := sql.Open("sqlite3", config.Configuration.DBFile)
 	checkErr(err)
 	defer sqlDB.Close()
 
@@ -91,25 +92,48 @@ func SearchData(k, c string) []string {
 	var r string
 
 	for row.Next() {
-		row.Scan(&id, &name, &path, &tags)
+		row.Scan(&id, &name, &url, &tags)
 		i := strconv.Itoa(id)
-		r = i + "◄►" + name + "◄►" + path + "◄►" + tags
+		r = i + "◄►" + name + "◄►" + url + "◄►" + tags
 		results = append(results, r)
 	}
 
 	return results
 }
 
-func execStatement(q string) {
-	sqlDB, err := sql.Open("sqlite3", "bookmarks.db")
+func execStatement(q string) sql.Result {
+	sqlDB, err := sql.Open("sqlite3", config.Configuration.DBFile)
 	checkErr(err)
 	defer sqlDB.Close()
 
 	statement, err := sqlDB.Prepare(q)
 	checkErr(err)
 
-	_, err = statement.Exec()
+	result, err := statement.Exec()
 	checkErr(err)
+
+	return result
+}
+
+func CheckIfDuplicated(s string) bool {
+	q := "SELECT COUNT(url) FROM items WHERE url=\"" + s + "\";"
+
+	sqlDB, err := sql.Open("sqlite3", config.Configuration.DBFile)
+	checkErr(err)
+	defer sqlDB.Close()
+
+	row, err := sqlDB.Query(q)
+	checkErr(err)
+
+	defer row.Close()
+	var count int
+
+	for row.Next() {
+		row.Scan(&count)
+	}
+
+	return count > 0
+
 }
 
 func checkErr(err error) {
