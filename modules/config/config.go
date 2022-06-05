@@ -12,10 +12,8 @@ import (
 const configFile = ".bookmarksConfig.txt"
 
 type Config struct {
-	CheckDuplicates string
-	GetNameFromURL  string
-	WebBrowser      string
-	DBFile          string
+	WebBrowser string
+	DBFile     string
 }
 
 var Configuration Config
@@ -33,10 +31,6 @@ func LoadConfig() {
 
 		v := strings.Split(scanner.Text(), "=")
 
-		if v[0] == "GET_NAME_FROM_URL" {
-			Configuration.GetNameFromURL = v[1]
-		}
-
 		if v[0] == "WEB_BROWSER" {
 			Configuration.WebBrowser = v[1]
 		}
@@ -48,10 +42,7 @@ func LoadConfig() {
 }
 
 func SetConfig() {
-	var getName, webBrowser, dbFile string
-
-	fmt.Printf("Get bookmark name from URLs? (y/n): ")
-	fmt.Scanf("%s", &getName)
+	var webBrowser, dbFile string
 
 	fmt.Printf("Favorite web browser to open bookmarks: ")
 	fmt.Scanf("%s", &webBrowser)
@@ -59,8 +50,7 @@ func SetConfig() {
 	fmt.Printf("Full path and name for the database file: ")
 	fmt.Scanf("%s", &dbFile)
 
-	configString := "GET_NAME_FROM_URL=" + getName + "\n"
-	configString += "WEB_BROWSER=" + webBrowser + "\n"
+	configString := "WEB_BROWSER=" + webBrowser + "\n"
 	configString += "DB_FILE=" + dbFile
 
 	file, err := os.Create(".bookmarksConfig.txt")

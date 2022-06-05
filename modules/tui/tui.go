@@ -159,6 +159,8 @@ func initUI() {
 			open()
 		} else if key == termbox.KeyCtrlE {
 			edit()
+		} else if key == termbox.KeyCtrlD {
+			remove()
 		}
 
 		return false
@@ -268,4 +270,13 @@ func getWords(u string) string {
 	w = strings.ReplaceAll(w, "_", " ")
 
 	return w
+}
+
+func remove() {
+	l := listboxResults.SelectedItemText()
+	id = strings.Split(l, "◄►")[0]
+
+	db.RemoveData(id)
+
+	updateStatusLabel("Item succesfully deleted.", 0)
 }
