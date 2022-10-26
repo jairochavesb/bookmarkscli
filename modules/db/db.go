@@ -1,7 +1,7 @@
 package db
 
 import (
-	"bookmarksV2/modules/config"
+	"bookmarkscli/modules/config"
 	"database/sql"
 	"log"
 	"os"

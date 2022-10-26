@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bookmarksV2/modules/config"
-	"bookmarksV2/modules/db"
-	"bookmarksV2/modules/tui"
+	"bookmarkscli/modules/config"
+	"bookmarkscli/modules/db"
+	"bookmarkscli/modules/tui"
 	"os"
 )
 
