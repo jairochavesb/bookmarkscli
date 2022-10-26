@@ -1,8 +1,8 @@
 package tui
 
 import (
-	"bookmarksV2/modules/config"
-	"bookmarksV2/modules/db"
+	"bookmarkscli/modules/config"
+	"bookmarkscli/modules/db"
 	"log"
 	"os"
 	"os/exec"
