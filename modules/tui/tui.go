@@ -39,7 +39,8 @@ func MainLoop() {
 }
 
 func initUI() {
-	width, height, _ := term.GetSize(0)
+	fd := int(os.Stdout.Fd())
+	width, height, _ := term.GetSize(fd)
 	frameWidth := width - 10
 	widgetWidth := frameWidth - 5
 
